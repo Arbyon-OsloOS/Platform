@@ -147,7 +147,7 @@ class LocationCache():
     def saveCache(self):
         appcache = {"apps": self.apps, "formatRevision":0}
         with open(HOME + "/.cache/omega/appcache", 'w') as pF:
-            pF.write(yaml.dump(appcache))
+            pF.write(yaml.dump(appcache, default_flow_style=False))
 
 __all__ = ['tidyUp', 'LocationCache', 'AppBundle']
 
