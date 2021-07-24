@@ -4,13 +4,13 @@ import os
 import sys
 import time
 
+sys.path.append("/usr/share/omega")
+
 from PySide2.QtCore import QTimer, Qt, QSize
 from PySide2.QtGui import (QGuiApplication, QIcon, QCursor,
               QBrush, QPixmap, QPainter, QGuiApplication, QFont)
 from PySide2.QtWidgets import (QApplication, QWidget, QFrame, QSizeGrip,
             QPushButton, QVBoxLayout, QLabel, QStackedWidget, QScrollArea)
-
-sys.path.append("/usr/share/omega")
 
 from OPlatform.SettingsAPI import Settings
 
@@ -83,47 +83,80 @@ class Switch(QFrame):
         self.circle.setStyleSheet(pss("""\
 background-color: :B;
 border-radius: 16px;
-border: 1px solid #888888;
+border: 1px solid :P;
 """))
+        self.flicked = lambda on: None
         self.flick()
+        self.uit = QTimer()
+        self.uit.setInterval(2500)
+        self.uit.timeout.connect(self.uir)
+        self.uit.start()
+        self.setFocusPolicy(Qt.StrongFocus)
     
-    def flick(self):
+    def uir(self):
+        self.circle.setStyleSheet(pss("""\
+background-color: :B;
+border-radius: 16px;
+border: 1px solid :P;
+"""))
+        self.flick(False) # Flick twice without animation, shows nothing but it
+        self.flick(False) # means we refresh our stylesheet. TODO: not that.
+    
+    def setFlicked(self, e):
+        self.flicked = e
+    
+    def flick(self, s=True):
         self.on = not self.on
+        self.flicked(self.on)
         if self.on:
             self.setStyleSheet(pss("""\
-background-color: ACCENT;
-height: 32px;
-width: 64px;
-border-radius: 16px;
-border: 1px solid #888888;
+QWidget {
+    background-color: ACCENT;
+    height: 32px;
+    width: 64px;
+    border-radius: 16px;
+    border: 1px solid :P;
+}
+
+QWidget:focus {
+    border: 1px solid ACCENT;
+}
 """))
-            self.circle.move(8, 0)
-            self.repaint()
-            time.sleep(0.025)
-            self.circle.move(16, 0)
-            self.repaint()
-            time.sleep(0.025)
-            self.circle.move(24, 0)
-            self.repaint()
-            time.sleep(0.025)
+            if s:
+                self.circle.move(8, 0)
+                self.repaint()
+                time.sleep(0.025)
+                self.circle.move(16, 0)
+                self.repaint()
+                time.sleep(0.025)
+                self.circle.move(24, 0)
+                self.repaint()
+                time.sleep(0.025)
             self.circle.move(32, 0)
         else:
             self.setStyleSheet(pss("""\
-background-color: :A;
-height: 32px;
-width: 64px;
-border-radius: 16px;
-border: 1px solid #888888;
+QWidget {
+    background-color: :A;
+    height: 32px;
+    width: 64px;
+    border-radius: 16px;
+    border: 1px solid :P;
+}
+
+QWidget:focus {
+    border: 1px solid ACCENT;
+}
 """))
-            self.circle.move(24, 0)
-            self.repaint()
-            time.sleep(0.025)
-            self.circle.move(16, 0)
-            self.repaint()
-            time.sleep(0.025)
-            self.circle.move(8, 0)
-            self.repaint()
-            time.sleep(0.025)
+            if s:
+                self.circle.move(24, 0)
+                self.repaint()
+                time.sleep(0.025)
+                self.circle.move(16, 0)
+                self.repaint()
+                time.sleep(0.025)
+                self.circle.move(8, 0)
+                self.repaint()
+                time.sleep(0.025)
             self.circle.move(0, 0)
     def mousePressEvent(self, e):
         self.flick()
@@ -139,25 +172,25 @@ class BasicWindow(QWidget):
         self.redrawTimer.setInterval(16)
         self.redrawTimer.timeout.connect(self.drawme)
         self.redrawTimer.start()
+        self.ts = QTimer()
+        self.ts.setInterval(5000)
+        self.ts.timeout.connect(self.sref)
+        self.ts.start()
         self.setWindowFilePath("what does this do?")
         self.setWindowFlags(Qt.CustomizeWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.sidebar = QFrame(parent=self)
-        self.sidebar.setStyleSheet(qss_s)
         self.sidebar.resize(300, self.height())
         self.ma = QFrame(parent=self)
-        self.ma.setStyleSheet(qss_m)
         self.ma.setGeometry(300, 0, self.width() - 300, self.height())
         tf = QFont("Inter")
         tf.setWeight(QFont.DemiBold)
         tf.setPixelSize(34)
         self.pageTitle = QLabel("Page 1", parent=self.ma)
         self.appTitle = QLabel(appName, parent=self.sidebar)
-        self.appTitle.setStyleSheet(pss("color: :F"))
         self.appTitle.setFont(tf)
         self.appTitle.move(42, 45)
         self.appTitle.resize(210, 44)
-        self.pageTitle.setStyleSheet(pss("color: :F"))
         self.pageTitle.setFont(tf)
         self.pageTitle.move(42, 45)
         self.pageTitle.resize(self.ma.width() - 60, 44)
@@ -183,6 +216,10 @@ class BasicWindow(QWidget):
         self.closeBtn = QPushButton(parent=self)
         self.closeBtn.setGeometry(self.width() - 67, 42, 42, 42)
         self.closeBtn.clicked.connect(self.close)
+        self.sidebar.setStyleSheet(qss_s)
+        self.ma.setStyleSheet(qss_m)
+        self.appTitle.setStyleSheet(pss("color: :F"))
+        self.pageTitle.setStyleSheet(pss("color: :F"))
         self.closeBtn.setStyleSheet(qss_RoundButton)
         self.closeBtn.setIcon(QIcon("/usr/share/icons/Papirus%s/16x16/actions/window-close.svg" % ("-Dark" if dark else "")))
         self.closeBtn.setIconSize(QSize(16, 16))
@@ -254,14 +291,72 @@ class BasicWindow(QWidget):
                 w.setStyleSheet(qss_Main)
     
     def drawme(self):
-        self.sizey.setGeometry(self.width() - 20, self.height() - 20, 20, 20)
-        self.ma.resize(self.width() - 300, self.height())
-        self.sidebar.resize(300, self.height())
-        self.closeBtn.setGeometry(self.width() - 67, 42, 42, 42)
-        self.pageWidget.resize(self.ma.width() - 84, self.ma.height() - 170)
-        self.titleDrag.resize(self.width()+300, 128)
-        self.pageTitle.resize(self.ma.width() - 60, 44)
-        pass # put something useful here, I'll do that later :~)
+        try:
+            self.sizey.setGeometry(self.width() - 20, self.height() - 20, 20, 20)
+            self.ma.resize(self.width() - 300, self.height())
+            self.sidebar.resize(300, self.height())
+            self.closeBtn.setGeometry(self.width() - 67, 42, 42, 42)
+            self.pageWidget.resize(self.ma.width() - 84, self.ma.height() - 170)
+            self.titleDrag.resize(self.width()+300, 128)
+            self.pageTitle.resize(self.ma.width() - 60, 44)
+            pass # put something useful here, I'll do that later :~)
+        except KeyboardInterrupt:
+            sys.exit(1)
+    
+    def sref(self):
+        global accent, dark, accentDark, p_B, p_S, p_F, p_A, p_P, p_C
+        global qss_m, qss_s, qss_RoundButton, qss_Main, qss_Selected
+        global lscache
+
+        if uiSettings.get("accent") is None:
+            uiSettings.set("accent", accent)
+        else:
+            accent = uiSettings.get("accent")
+
+        if uiSettings.get("dark") is None:
+            uiSettings.set("dark", True)
+            dark = True
+        else:
+            dark = uiSettings.get("dark")
+
+        if uiSettings.get("accentDark") is None:
+            accentDark = True
+        else:
+            accentDark = uiSettings.get("accentDark")
+
+        if lscache == [accent, dark, accentDark]:
+            return
+        
+        lscache = [accent, dark, accentDark]
+        
+        p_B = c_B[int(dark)]
+        p_S = c_S[int(dark)]
+        p_F = c_F[int(dark)]
+        p_A = c_A[int(dark)]
+        p_P = c_P[int(dark)]
+        p_C = c_C[int(accentDark)]
+
+        qss_m = pss(_qss_m)
+        qss_s = pss(_qss_s)
+        qss_RoundButton = pss(_qss_RoundButton)
+        qss_Main = pss(_qss_Main)
+        qss_Selected = pss(_qss_Selected)
+        app.setStyleSheet(qss_Main)
+        self.sidebar.setStyleSheet(qss_s)
+        self.ma.setStyleSheet(qss_m)
+        self.appTitle.setStyleSheet(pss("color: :F"))
+        self.pageTitle.setStyleSheet(pss("color: :F"))
+        self.closeBtn.setStyleSheet(qss_RoundButton)
+        self.closeBtn.setIcon(QIcon("/usr/share/icons/Papirus%s/16x16/actions/window-close.svg" % ("-Dark" if dark else "")))
+        
+        index = self.selectedPage
+        i = -1
+        for w in self.pgBtns:
+            i += 1
+            if i == index:
+                w.setStyleSheet(qss_Selected)
+            else:
+                w.setStyleSheet(qss_Main)
 
 
 accent = "#0075db"
@@ -273,7 +368,7 @@ appName = os.path.basename(os.path.dirname(__file__))
 
 #    light theme, dark theme
 c_B = ["#ffffff", "#282828"]
-c_S = ["#dddddddd", "#dd373737"]
+c_S = ["#eedddddd", "#ee373737"]
 c_F = ["#000000", "#ffffff"]
 c_A = ["#bbbbbb", "#323232"]
 c_P = ["#999999", "#424242"]
@@ -306,6 +401,8 @@ if uiSettings.get("accentDark") is None:
 else:
     accentDark = uiSettings.get("accentDark")
 
+lscache = [accent, dark, accentDark]
+
 p_B = c_B[int(dark)]
 p_S = c_S[int(dark)]
 p_F = c_F[int(dark)]
@@ -318,7 +415,7 @@ def pss(s):
     ).replace(":S", p_S).replace(":F", p_F).replace(":P", p_P).replace(":C",
     p_C)
 
-qss_m = pss("\
+_qss_m = "\
 BasicWindow > QFrame { \
 background-color: :B; \
 border-bottom-right-radius: 20px; \
@@ -326,9 +423,9 @@ border-top-right-radius: 20px; \
 border-right: 1px solid #0f000000; \
 border-top: 1px solid #0f000000; \
 border-bottom: 1px solid #0f000000 \
-}")
+}"
 
-qss_s = pss("\
+_qss_s = "\
 BasicWindow > QFrame { \
 background-color: :S; \
 border-bottom-left-radius: 20px; \
@@ -336,9 +433,9 @@ border-top-left-radius: 20px; \
 border-left: 1px solid #0f000000; \
 border-top: 1px solid #0f000000; \
 border-bottom: 1px solid #0f000000 \
-}")
+}"
 
-qss_RoundButton = pss("""\
+_qss_RoundButton = """\
 QPushButton {
     background-color: :A;
     border-radius: 21px;
@@ -349,9 +446,9 @@ QPushButton {
 QPushButton:pressed {
     background-color: :P;
 }
-""")
+"""
 
-qss_Main = pss("""\
+_qss_Main = """\
 QPushButton {
     background-color: :A;
     border-radius: 10px;
@@ -413,9 +510,9 @@ QProgressBar::chunk {
     border-radius: 0px;
     width: 20px;
 }
-""")
+"""
 
-qss_Selected = pss("""\
+_qss_Selected = """\
 QWidget {
     background-color: ACCENT;/*
     height: 40px;
@@ -433,7 +530,12 @@ QWidget:focus {
     border-color: ACCENT;
     border-width: 2px;
 }
-""")
+"""
+qss_m = pss(_qss_m)
+qss_s = pss(_qss_s)
+qss_RoundButton = pss(_qss_RoundButton)
+qss_Main = pss(_qss_Main)
+qss_Selected = pss(_qss_Selected)
 
 app = QApplication([])
 app.setApplicationName(bundle)

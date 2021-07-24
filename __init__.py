@@ -1,1 +1,1 @@
-__all__ = ["LaunchServices", "SettingsAPI"]
+__all__ = ["LaunchServices", "SettingsAPI", "Oui"]
