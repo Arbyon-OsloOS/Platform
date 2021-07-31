@@ -8,7 +8,8 @@ sys.path.append("/usr/share/omega")
 
 from PySide2.QtCore import QTimer, Qt, QSize
 from PySide2.QtGui import (QGuiApplication, QIcon, QCursor,
-              QBrush, QPixmap, QPainter, QGuiApplication, QFont)
+        QBrush, QPixmap, QPainter, QGuiApplication, QFont, QBrush,
+                                                QColor, QPainterPath)
 from PySide2.QtWidgets import (QApplication, QWidget, QFrame, QSizeGrip,
             QPushButton, QVBoxLayout, QLabel, QStackedWidget, QScrollArea)
 
@@ -61,7 +62,7 @@ class Page():
 class MetalWidget(QWidget):
     def __init__(self, *args, **kwargs):
         QWidget.__init__(self, *args, **kwargs)
-    
+
     def paintEvent(self, ev):
         p = QPainter(self)
         p.setBrush(QBrush(QPixmap("./metal.png")))
@@ -69,97 +70,57 @@ class MetalWidget(QWidget):
         ev.accept()
 
 
-class Switch(QFrame):
+class Switch(QWidget):
     def __init__(self, on=False, *args, **kwargs):
-        QFrame.__init__(self, *args, **kwargs)
-        self.on = not on
-        self.setFixedSize(64, 32)
-        self.circle = QFrame(parent=self)
+        QWidget.__init__(self, *args, **kwargs)
+        self.setMinimumSize(40, 24)
+        self.on = on
+        self.onFlick = lambda e: None
+        self.bx = 18 if on else 0
+
+    def paintEvent(self, e):
+        path = QPainterPath()
+        path.moveTo(0, 2)
+        path.arcTo(0, 2, 14, 18, 90, 180)
+        path.arcTo(24, 2, 14, 18, 270, 180)
+        p = QPainter(self)
+        p.setPen(QColor(p_P))
+        p.setRenderHint(QPainter.Antialiasing)
+        b = QBrush()
+        b.setColor(QColor(p_P))
+        p.setBrush(b)
+        p.drawRoundedRect(0, 2, 38, 18, 8, 8)
         if self.on:
-            self.circle.move(0, 0)
+            bkgd = QColor(accent)
         else:
-            self.circle.move(32, 0)
-        self.circle.resize(32, 32)
-        self.circle.setStyleSheet(pss("""\
-background-color: :B;
-border-radius: 16px;
-border: 1px solid :P;
-"""))
-        self.flicked = lambda on: None
-        self.flick()
-        self.uit = QTimer()
-        self.uit.setInterval(2500)
-        self.uit.timeout.connect(self.uir)
-        self.uit.start()
-        self.setFocusPolicy(Qt.StrongFocus)
-    
-    def uir(self):
-        self.circle.setStyleSheet(pss("""\
-background-color: :B;
-border-radius: 16px;
-border: 1px solid :P;
-"""))
-        self.flick(False) # Flick twice without animation, shows nothing but it
-        self.flick(False) # means we refresh our stylesheet. TODO: not that.
-    
+            bkgd = QColor(p_A)
+        c = QPainterPath()
+        c.moveTo(0, 0)
+        c.addRoundedRect(self.bx, 0, 22, 22, 11, 11)
+        p.fillPath(path, bkgd)
+        p.fillPath(c, QColor(p_B))
+        p.drawRoundedRect(self.bx, 0, 22, 22, 11, 11)
+
     def setFlicked(self, e):
-        self.flicked = e
-    
+        self.onFlick = e
+
     def flick(self, s=True):
         self.on = not self.on
-        self.flicked(self.on)
         if self.on:
-            self.setStyleSheet(pss("""\
-QWidget {
-    background-color: ACCENT;
-    height: 32px;
-    width: 64px;
-    border-radius: 16px;
-    border: 1px solid :P;
-}
-
-QWidget:focus {
-    border: 1px solid ACCENT;
-}
-"""))
-            if s:
-                self.circle.move(8, 0)
-                self.repaint()
-                time.sleep(0.025)
-                self.circle.move(16, 0)
-                self.repaint()
-                time.sleep(0.025)
-                self.circle.move(24, 0)
-                self.repaint()
-                time.sleep(0.025)
-            self.circle.move(32, 0)
+            xs = [8, 11, 15, 18]
         else:
-            self.setStyleSheet(pss("""\
-QWidget {
-    background-color: :A;
-    height: 32px;
-    width: 64px;
-    border-radius: 16px;
-    border: 1px solid :P;
-}
+            xs = [15, 11, 8, 0]
+        for n in xs:
+            self.bx = n
+            self.repaint()
+            time.sleep(0.025)
+        self.onFlick(self.on)
 
-QWidget:focus {
-    border: 1px solid ACCENT;
-}
-"""))
-            if s:
-                self.circle.move(24, 0)
-                self.repaint()
-                time.sleep(0.025)
-                self.circle.move(16, 0)
-                self.repaint()
-                time.sleep(0.025)
-                self.circle.move(8, 0)
-                self.repaint()
-                time.sleep(0.025)
-            self.circle.move(0, 0)
     def mousePressEvent(self, e):
         self.flick()
+
+
+OSwitch = Switch
 
 
 class BasicWindow(QWidget):
@@ -194,16 +155,19 @@ class BasicWindow(QWidget):
         self.pageTitle.setFont(tf)
         self.pageTitle.move(42, 45)
         self.pageTitle.resize(self.ma.width() - 60, 44)
-        
+
         # Here we need to implement the pages.
-        
-        self.pagesWidget = QWidget(parent=self.sidebar)
-        self.pagesWidget.setGeometry(42, 128, 216, self.sidebar.height() - 170)
+
+        self.psb = QScrollArea(parent=self.sidebar)
+        self.pagesWidget = QWidget()
+        self.psb.setWidget(self.pagesWidget)
+        self.psb.setGeometry(42, 128, 216, self.sidebar.height() - 170)
+        self.psb.setWidgetResizable(True)
         self.pager = QVBoxLayout()
         self.pagesWidget.setLayout(self.pager)
         self.pager.setAlignment(Qt.AlignTop)
         self.pager.setContentsMargins(0, 0, 0, 0)
-        
+
         self.pageWidget = QStackedWidget(parent=self.ma)
         self.pageWidget.setGeometry(42, 128, self.ma.width() - 84, self.ma.height() - 170)
         self.page1 = QVBoxLayout()
@@ -221,11 +185,11 @@ class BasicWindow(QWidget):
         self.appTitle.setStyleSheet(pss("color: :F"))
         self.pageTitle.setStyleSheet(pss("color: :F"))
         self.closeBtn.setStyleSheet(qss_RoundButton)
-        self.closeBtn.setIcon(QIcon("/usr/share/icons/Papirus%s/16x16/actions/window-close.svg" % ("-Dark" if dark else "")))
+        self.closeBtn.setIcon(QIcon("/usr/share/omega/OPlatform/Oui/close%s.svg" % ("-dark" if dark else "")))
         self.closeBtn.setIconSize(QSize(16, 16))
         self.closeBtn.setFocusPolicy(Qt.NoFocus)
         self.pgBtns = []
-    
+
     def loadPages(self, pages, destroy=True):
         if self.selectedPage < len(self.pages):
             title = self.pages[self.selectedPage].name
@@ -270,7 +234,7 @@ class BasicWindow(QWidget):
                     self.setWindowTitle(n)
                     self.pageTitle.setText(n)
             e()
-    
+
     def showPage(self, index):
         self.selectedPage = index
         self.page1 = self.pages[index].layout
@@ -289,7 +253,7 @@ class BasicWindow(QWidget):
                 w.setStyleSheet(qss_Selected)
             else:
                 w.setStyleSheet(qss_Main)
-    
+
     def drawme(self):
         try:
             self.sizey.setGeometry(self.width() - 20, self.height() - 20, 20, 20)
@@ -299,10 +263,11 @@ class BasicWindow(QWidget):
             self.pageWidget.resize(self.ma.width() - 84, self.ma.height() - 170)
             self.titleDrag.resize(self.width()+300, 128)
             self.pageTitle.resize(self.ma.width() - 60, 44)
+            self.psb.resize(216, self.sidebar.height() - 170)
             pass # put something useful here, I'll do that later :~)
         except KeyboardInterrupt:
             sys.exit(1)
-    
+
     def sref(self):
         global accent, dark, accentDark, p_B, p_S, p_F, p_A, p_P, p_C
         global qss_m, qss_s, qss_RoundButton, qss_Main, qss_Selected
@@ -326,9 +291,9 @@ class BasicWindow(QWidget):
 
         if lscache == [accent, dark, accentDark]:
             return
-        
+
         lscache = [accent, dark, accentDark]
-        
+
         p_B = c_B[int(dark)]
         p_S = c_S[int(dark)]
         p_F = c_F[int(dark)]
@@ -347,8 +312,8 @@ class BasicWindow(QWidget):
         self.appTitle.setStyleSheet(pss("color: :F"))
         self.pageTitle.setStyleSheet(pss("color: :F"))
         self.closeBtn.setStyleSheet(qss_RoundButton)
-        self.closeBtn.setIcon(QIcon("/usr/share/icons/Papirus%s/16x16/actions/window-close.svg" % ("-Dark" if dark else "")))
-        
+        self.closeBtn.setIcon(QIcon("/usr/share/omega/OPlatform/Oui/close%s.svg" % ("-dark" if dark else "")))
+
         index = self.selectedPage
         i = -1
         for w in self.pgBtns:
@@ -456,16 +421,49 @@ QPushButton {
     color: :F;
     height: 40px;
     selection-background-color: transparent;
-    width: 100px;
+    width: 50px;
+}
+
+QScrollBar {
+    border: 0px solid transparent;
+    background: transparent;
+}
+
+QScrollBar::handle {
+    border: 1px solid #0f000000;
+    background: :P;
+    border-radius: 5px;
+}
+
+QScrollBar:horizontal {
+    height: 10px;
+}
+
+QScrollBar:vertical {
+    width: 10px;
+}
+
+QScrollBar::add-line, QScrollBar::sub-line,
+QScrollBar:left-arrow, QScrollBar::right-arrow,
+QScrollBar::add-page, QScrollBar::sub-page,
+QScrollBar:up-arrow, QScrollBar::down-arrow {
+    border: 0px solid transparent;
+    background: transparent;
+    height: 0px;
+    width: 0px;
 }
 
 QPushButton:pressed {
     background-color: :P;
 }
 
-QWidget:focus {
+QPushButton:focus {
     border-color: ACCENT;
     border-width: 2px;
+}
+
+QPushButton:pressed:focus {
+    border: 1px solid #0f000000;
 }
 
 QLabel {
@@ -477,15 +475,17 @@ QWidget {
 }
 
 QScrollArea {
+    background: transparent;
     border: 0px solid transparent;
 }
 
 QScrollArea > QWidget {
+    background: transparent;
     border: 0px solid transparent;
 }
 
 QScrollArea > QWidget > QWidget {
-    background: :B;
+    background: transparent;
     border: 0px solid transparent;
 }
 
