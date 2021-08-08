@@ -4,6 +4,8 @@ import os
 import sys
 import ouiread
 
+from Widgets import OButton
+
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QHBoxLayout, QLineEdit, QFrame, QProgressBar
 
@@ -17,11 +19,13 @@ l1.addWidget(fil := QLineEdit())
 l1.addWidget(w1 := QWidget())
 w1.setLayout(h1 := QHBoxLayout())
 l1.addSpacing(5)
-l1.addWidget(QPushButton("Start Backup"))
+l1.addWidget(bb := OButton("Start Backup"))
+bb.clicked.connect(lambda: print("clicky"))
 l1.addSpacing(10)
 l1.addWidget(pb := QProgressBar())
 h1.addWidget(QLabel("Include Applications folder"))
-h1.addWidget(ouiread.Switch())
+h1.addWidget(ss := ouiread.Switch())
+ss.flicked.connect(lambda on: print("Flicky" if on else "flicky"))
 fil.setText("backup-2021-07-23")
 lab.setWordWrap(True)
 l2 = QVBoxLayout()

@@ -70,57 +70,8 @@ class MetalWidget(QWidget):
         ev.accept()
 
 
-class Switch(QWidget):
-    def __init__(self, on=False, *args, **kwargs):
-        QWidget.__init__(self, *args, **kwargs)
-        self.setMinimumSize(40, 24)
-        self.on = on
-        self.onFlick = lambda e: None
-        self.bx = 18 if on else 0
-
-    def paintEvent(self, e):
-        path = QPainterPath()
-        path.moveTo(0, 2)
-        path.arcTo(0, 2, 14, 18, 90, 180)
-        path.arcTo(24, 2, 14, 18, 270, 180)
-        p = QPainter(self)
-        p.setPen(QColor(p_P))
-        p.setRenderHint(QPainter.Antialiasing)
-        b = QBrush()
-        b.setColor(QColor(p_P))
-        p.setBrush(b)
-        p.drawRoundedRect(0, 2, 38, 18, 8, 8)
-        if self.on:
-            bkgd = QColor(accent)
-        else:
-            bkgd = QColor(p_A)
-        c = QPainterPath()
-        c.moveTo(0, 0)
-        c.addRoundedRect(self.bx, 0, 22, 22, 11, 11)
-        p.fillPath(path, bkgd)
-        p.fillPath(c, QColor(p_B))
-        p.drawRoundedRect(self.bx, 0, 22, 22, 11, 11)
-
-    def setFlicked(self, e):
-        self.onFlick = e
-
-    def flick(self, s=True):
-        self.on = not self.on
-        if self.on:
-            xs = [8, 11, 15, 18]
-        else:
-            xs = [15, 11, 8, 0]
-        for n in xs:
-            self.bx = n
-            self.repaint()
-            time.sleep(0.025)
-        self.onFlick(self.on)
-
-    def mousePressEvent(self, e):
-        self.flick()
-
-
-OSwitch = Switch
+from .Widgets import OSwitch
+Switch = OSwitch
 
 
 class BasicWindow(QWidget):

@@ -2,7 +2,7 @@ import os
 import sys
 import time
 
-import Widgets as Widgets
+from . import Widgets
 
 sys.path.append("/usr/share/omega")
 
@@ -17,9 +17,9 @@ from OPlatform.SettingsAPI import Settings
 
 bundle = Widgets.bundle
 
-app = QApplication([])
-app.setApplicationName(bundle)
-app.setStyleSheet(Widgets.qss_Main)
-
-def run():
-    return app.exec_()
+#app = QApplication([])
+#app.setApplicationName(bundle)
+#app.setStyleSheet(Widgets.qss_Main)
+#
+#def run():
+#    return app.exec_()
