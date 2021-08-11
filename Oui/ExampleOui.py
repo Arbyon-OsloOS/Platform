@@ -2,7 +2,10 @@
 
 import os
 import sys
-import ouiread
+
+sys.path.append("/usr/share/omega")
+
+import OPlatform.Oui.ouiread as ouiread
 
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QHBoxLayout, QLineEdit

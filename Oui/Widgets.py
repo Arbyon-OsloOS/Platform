@@ -20,6 +20,7 @@ from .Buttons import *
 #from Input import *
 #from Misc import *
 
+
 class ODraggableWidget(QWidget):
     def __init__(self, *args, **kwargs):
         QWidget.__init__(self, *args, **kwargs)
@@ -54,6 +55,19 @@ class ODraggableWidget(QWidget):
         self.parentWidget().move(me.globalX() - self.xo,
                                  me.globalY() - self.yo)
         me.accept()
+
+
+class OWindow(QWidget):
+    def __init__(self, *args, **kwargs):
+        QWidget.__init__(self, *args, **kwargs)
+        self.setMinimumSize(300, 600)
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        path = QPainterPath()
+        path.addRoundedRect(0, 0, self.width(), self.height(), 20, 20)
+        p.fillPath(path, QColor(settings.p_B))
 
 accent = settings.accent
 sidebarShown = True

@@ -89,7 +89,7 @@ class BasicWindow(QWidget):
         self.ts.timeout.connect(self.sref)
         self.ts.start()
         self.setWindowFilePath("what does this do?")
-        self.setWindowFlags(Qt.CustomizeWindowHint)
+        self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.sidebar = QFrame(parent=self)
         self.sidebar.resize(300, self.height())

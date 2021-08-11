@@ -2,9 +2,11 @@
 
 import os
 import sys
-import ouiread
 
-from Widgets import OButton
+sys.path.append("/usr/share/omega")
+
+from OPlatform.Oui import ouiread
+from OPlatform.Oui.Widgets import OButton, OWindow
 
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QHBoxLayout, QLineEdit, QFrame, QProgressBar
@@ -39,4 +41,6 @@ p2 = ouiread.Page(l2, name="Restore a Backup")
 w = ouiread.BasicWindow()
 w.show()
 w.loadPages([p1, p2])
+test = OWindow()
+test.show()
 sys.exit(ouiread.run())
